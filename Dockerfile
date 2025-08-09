@@ -12,6 +12,12 @@ RUN npm ci && npm cache clean --force
 # Copy source code
 COPY . .
 
+# Ensure public directory exists and has content
+RUN mkdir -p public
+RUN if [ ! -f public/index.html ]; then \
+        echo '<!DOCTYPE html><html><head><title>Lyst Backend</title></head><body><h1>Lyst Backend</h1><p>Public files not found</p></body></html>' > public/index.html; \
+    fi
+
 # Build the application
 RUN npm run build
 
