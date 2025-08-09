@@ -211,19 +211,34 @@
         // 3. Click the gear icon (⚙️) next to "Project Overview"
         // 4. Select "Project settings"
         // 5. Scroll to "Your apps" section
-        // 6. Copy the config object and replace this one
-        const firebaseConfig = {
-            apiKey: "YOUR_FIREBASE_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID",
-            measurementId: "YOUR_MEASUREMENT_ID"
-        };
+                // Firebase configuration - Loaded from backend for security
+        let firebaseConfig = null;
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+        // Load Firebase config from backend
+        async function loadFirebaseConfig() {
+            try {
+                const response = await fetch('/api/firebase-config');
+                if (response.ok) {
+                    firebaseConfig = await response.json();
+                    initializeFirebase();
+                } else {
+                    showResult('❌ Failed to load Firebase configuration', 'error');
+                }
+            } catch (error) {
+                showResult('❌ Error loading Firebase configuration', 'error');
+            }
+        }
+
+        // Initialize Firebase after config is loaded
+        function initializeFirebase() {
+            if (!firebaseConfig) {
+                showResult('❌ Firebase configuration not available', 'error');
+                return;
+            }
+            
+            firebase.initializeApp(firebaseConfig);
+            initializeGoogleSignIn();
+        }
 
         // Backend API URL
         const API_BASE_URL = 'http://localhost:3080';
@@ -400,8 +415,8 @@ ${JSON.stringify(backendResult, null, 2)}`, 'success');
 
 
 
-        // Initialize Google Sign-In
-        initializeGoogleSignIn();
+        // Load Firebase configuration and initialize
+        loadFirebaseConfig();
 
         // Auto-fill Firebase config info
         showResult(`ℹ️  Firebase Configuration Required
