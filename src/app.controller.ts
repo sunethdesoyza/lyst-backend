@@ -1,7 +1,7 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Res, Req, UnauthorizedException } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { join } from 'path';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -44,7 +44,12 @@ export class AppController {
       }
     }
   })
-  getFirebaseConfig() {
+  getFirebaseConfig(@Req() req: Request) {
+    // Validate request source
+    if (!this.isValidRequest(req)) {
+      throw new UnauthorizedException('Access Denied');
+    }
+
     const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
     const apiKey = this.configService.get<string>('FIREBASE_API_KEY');
     
@@ -61,5 +66,32 @@ export class AppController {
       appId: this.configService.get<string>('FIREBASE_APP_ID', '1:936036645672:web:675865f75c539f2aa92e1d'),
       measurementId: this.configService.get<string>('FIREBASE_MEASUREMENT_ID', 'G-P77WVKL62E')
     };
+  }
+
+  private isValidRequest(req: Request): boolean {
+    const userAgent = req.get('User-Agent');
+    const referer = req.get('Referer');
+    const origin = req.get('Origin');
+    
+    // Block obvious API testing tools
+    if (!userAgent || userAgent.includes('curl') || userAgent.includes('Postman')) {
+      console.log('❌ Blocked request from API testing tool:', userAgent);
+      return false;
+    }
+    
+    // Check referer if present
+    if (referer && !referer.includes('lyst.sunethdesoyza.live')) {
+      console.log('❌ Blocked request with invalid referer:', referer);
+      return false;
+    }
+    
+    // Check origin if present
+    if (origin && origin !== 'https://lyst.sunethdesoyza.live') {
+      console.log('❌ Blocked request with invalid origin:', origin);
+      return false;
+    }
+    
+    console.log('✅ Valid request from:', { userAgent, referer, origin });
+    return true;
   }
 } 
