@@ -238,6 +238,17 @@
             
             firebase.initializeApp(firebaseConfig);
             initializeGoogleSignIn();
+            
+            // Listen for auth state changes (moved here to ensure Firebase is initialized)
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    document.getElementById('signOutBtn').style.display = 'inline-block';
+                } else {
+                    currentUser = null;
+                    document.getElementById('signOutBtn').style.display = 'none';
+                }
+            });
         }
 
         // Backend API URL
@@ -398,16 +409,7 @@ ${JSON.stringify(backendResult, null, 2)}`, 'success');
             }
         });
 
-        // Listen for auth state changes
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('signOutBtn').style.display = 'inline-block';
-            } else {
-                currentUser = null;
-                document.getElementById('signOutBtn').style.display = 'none';
-            }
-        });
+
 
 
 
@@ -417,24 +419,6 @@ ${JSON.stringify(backendResult, null, 2)}`, 'success');
 
         // Load Firebase configuration and initialize
         loadFirebaseConfig();
-
-        // Auto-fill Firebase config info
-        showResult(`ℹ️  Firebase Configuration Required
-
-To use Google Sign-In, you need to update the firebaseConfig object above with your real Firebase settings:
-
-1. Go to https://console.firebase.google.com/
-2. Select your project
-3. Click the gear icon (⚙️) next to "Project Overview"
-4. Select "Project settings"
-5. Scroll to "Your apps" section
-6. Copy the config object and replace the firebaseConfig above
-
-Also make sure to:
-- Enable Google Sign-In in Firebase Console > Authentication > Sign-in method
-- Add your domain to authorized domains if needed
-
-Current config is using placeholder values.`, 'info');
     </script>
 </body>
 </html> 
