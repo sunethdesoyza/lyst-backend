@@ -64,6 +64,70 @@ src/
 - **JWT Token Validation**: Custom Passport strategy for Firebase JWT tokens
 - **User Management**: Automatic user verification and data retrieval
 - **Protected Routes**: All list operations require valid authentication
+- **Comprehensive Auth Interface**: Complete Firebase authentication endpoints
+
+#### 🔐 Firebase Authentication Endpoints
+
+The application provides a complete Firebase authentication interface with the following endpoints:
+
+**Authentication:**
+- `POST /auth/login` - Login with Firebase ID token
+- `POST /auth/register` - Create new user account
+- `POST /auth/verify` - Verify Firebase token
+- `POST /auth/refresh` - Token refresh (client-side guidance)
+
+**User Management (Requires Authentication):**
+- `GET /auth/user/:uid` - Get user information
+- `GET /auth/users` - List all users (with pagination)
+- `DELETE /auth/user/:uid` - Delete user account
+- `POST /auth/user/:uid/revoke-tokens` - Revoke user tokens
+
+**Quick Authentication Example:**
+```bash
+# Login with Firebase token
+curl -X POST http://localhost:3080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"idToken": "your-firebase-id-token"}'
+
+# Register new user
+curl -X POST http://localhost:3080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123",
+    "displayName": "John Doe"
+  }'
+
+# Verify token
+curl -X POST http://localhost:3080/auth/verify \
+  -H "Content-Type: application/json" \
+  -d '{"idToken": "your-firebase-id-token"}'
+```
+
+**Client-Side Integration:**
+```typescript
+// Get Firebase ID token from client-side Firebase Auth
+const idToken = await firebase.auth().currentUser?.getIdToken();
+
+// Login with backend
+const response = await fetch('http://localhost:3080/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ idToken })
+});
+
+const result = await response.json();
+console.log('Login successful:', result.user);
+```
+
+**Features:**
+- ✅ **Secure Token Validation** - All tokens verified with Firebase Admin SDK
+- ✅ **User Registration** - Server-side user creation with validation
+- ✅ **Token Verification** - Decode and verify Firebase ID tokens
+- ✅ **User Management** - Full CRUD operations for user accounts
+- ✅ **Error Handling** - Comprehensive error responses with proper HTTP status codes
+- ✅ **Swagger Documentation** - Interactive API documentation at `/api`
+- ✅ **TypeScript Support** - Strongly typed DTOs and responses
 
 ### 2. List Management
 
@@ -128,6 +192,18 @@ The application features an intelligent "forgotten items" system that automatica
 ### Authentication
 - All endpoints require Firebase JWT token in Authorization header
 - Format: `Bearer <firebase-jwt-token>`
+
+#### Firebase Authentication Endpoints
+```
+POST   /auth/login                    # Login with Firebase ID token
+POST   /auth/register                 # Create new user account
+POST   /auth/verify                   # Verify Firebase token
+POST   /auth/refresh                  # Token refresh (client-side guidance)
+GET    /auth/user/:uid                # Get user information (authenticated)
+GET    /auth/users                    # List all users (authenticated)
+DELETE /auth/user/:uid                # Delete user account (authenticated)
+POST   /auth/user/:uid/revoke-tokens  # Revoke user tokens (authenticated)
+```
 
 ### Lists
 ```
@@ -216,6 +292,12 @@ The Swagger UI provides:
 - Request/response examples
 - Interactive testing interface
 - Authentication token management
+
+### 📖 Additional Documentation
+
+- **Firebase Authentication Guide**: `docs/firebase-auth-interface.md` - Comprehensive guide for Firebase authentication integration
+- **Private Registry Setup**: `docs/private-registry-setup.md` - Complete Docker registry setup guide
+- **Environment Examples**: `env.example` - Environment variable templates
 
 ## 🔒 Security Features
 

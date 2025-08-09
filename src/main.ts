@@ -6,12 +6,14 @@ import { AppModule } from './app.module';
 import { FirebaseService } from './config/firebase.config';
 import { AuthExceptionFilter } from './auth/filters/auth-exception.filter';
 import { Logger } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   
   try {
-    const app = await NestFactory.create(AppModule, {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: ['error', 'warn', 'debug', 'log', 'verbose'],
     });
     
@@ -20,6 +22,9 @@ async function bootstrap() {
     
     // Enable CORS
     app.enableCors();
+    
+    // Serve static files
+    app.useStaticAssets(join(__dirname, '..', 'public'));
     
     // Setup validation pipe
     app.useGlobalPipes(new ValidationPipe());
@@ -74,6 +79,7 @@ async function bootstrap() {
     
     await app.listen(port);
     logger.log(`🚀 Application is running in ${nodeEnv} mode on: http://localhost:${port}`);
+    logger.log(`🔐 Login Interface available at: http://localhost:${port}`);
     logger.log(`📚 Swagger documentation is available at: http://localhost:${port}/api`);
   } catch (error) {
     logger.error('Failed to start application:', error);

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyst Backend - Firebase Authentication</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Lyst Backend</h1>
+            <p>Firebase Authentication Interface</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('login')">Login</div>
+            <div class="tab" onclick="switchTab('register')">Register</div>
+            <div class="tab" onclick="switchTab('verify')">Verify Token</div>
+        </div>
+
+        <!-- Login Tab -->
+        <div id="login" class="tab-content active">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password">
+                </div>
+                <button type="submit" class="btn" id="loginBtn">
+                    <span class="loading" id="loginLoading" style="display: none;"></span>
+                    Login with Firebase
+                </button>
+            </form>
+        </div>
+
+        <!-- Register Tab -->
+        <div id="register" class="tab-content">
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" required placeholder="Enter your password (min 6 chars)">
+                </div>
+                <div class="form-group">
+                    <label for="displayName">Display Name (Optional)</label>
+                    <input type="text" id="displayName" placeholder="Enter your display name">
+                </div>
+                <button type="submit" class="btn" id="registerBtn">
+                    <span class="loading" id="registerLoading" style="display: none;"></span>
+                    Register with Firebase
+                </button>
+            </form>
+        </div>
+
+        <!-- Verify Token Tab -->
+        <div id="verify" class="tab-content">
+            <form id="verifyForm">
+                <div class="form-group">
+                    <label for="tokenInput">Firebase ID Token</label>
+                    <input type="text" id="tokenInput" required placeholder="Paste your Firebase ID token here">
+                </div>
+                <button type="submit" class="btn" id="verifyBtn">
+                    <span class="loading" id="verifyLoading" style="display: none;"></span>
+                    Verify Token
+                </button>
+            </form>
+        </div>
+
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // Firebase configuration - Replace with your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            authDomain: "lyst-18d7e.firebaseapp.com",
+            projectId: "lyst-18d7e",
+            storageBucket: "lyst-18d7e.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Backend API URL
+        const API_BASE_URL = 'http://localhost:3080';
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            // Clear result
+            hideResult();
+        }
+
+        // Show result
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+        }
+
+        // Hide result
+        function hideResult() {
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // Show loading
+        function showLoading(buttonId, loadingId) {
+            document.getElementById(buttonId).disabled = true;
+            document.getElementById(loadingId).style.display = 'inline-block';
+        }
+
+        // Hide loading
+        function hideLoading(buttonId, loadingId) {
+            document.getElementById(buttonId).disabled = false;
+            document.getElementById(loadingId).style.display = 'none';
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            showLoading('loginBtn', 'loginLoading');
+            hideResult();
+
+            try {
+                // Sign in with Firebase
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Get ID token
+                const idToken = await user.getIdToken();
+                
+                // Send to backend
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ idToken })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showResult(`✅ Login Successful!
+
+User Information:
+- UID: ${result.user.uid}
+- Email: ${result.user.email}
+- Display Name: ${result.user.displayName || 'N/A'}
+- Email Verified: ${result.user.emailVerified}
+- Created: ${result.user.createdAt}
+- Last Sign In: ${result.user.lastSignInTime}
+
+Token Information:
+- ID Token: ${idToken.substring(0, 50)}...
+- Expires At: ${result.expiresAt}
+
+Backend Response:
+${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ Login Failed: ${result.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                hideLoading('loginBtn', 'loginLoading');
+            }
+        });
+
+        // Register form handler
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const displayName = document.getElementById('displayName').value;
+
+            showLoading('registerBtn', 'registerLoading');
+            hideResult();
+
+            try {
+                // Send registration to backend
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email, 
+                        password, 
+                        displayName: displayName || undefined 
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showResult(`✅ Registration Successful!
+
+User Information:
+- UID: ${result.uid}
+- Email: ${result.email}
+- Display Name: ${result.displayName || 'N/A'}
+- Email Verified: ${result.emailVerified}
+- Created: ${result.createdAt}
+
+Backend Response:
+${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ Registration Failed: ${result.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                hideLoading('registerBtn', 'registerLoading');
+            }
+        });
+
+        // Verify token form handler
+        document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const idToken = document.getElementById('tokenInput').value;
+
+            showLoading('verifyBtn', 'verifyLoading');
+            hideResult();
+
+            try {
+                // Send token to backend for verification
+                const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ idToken })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showResult(`✅ Token Verification Successful!
+
+User Information:
+- UID: ${result.user.uid}
+- Email: ${result.user.email}
+- Display Name: ${result.user.displayName || 'N/A'}
+- Email Verified: ${result.user.emailVerified}
+- Created: ${result.user.createdAt}
+- Last Sign In: ${result.user.lastSignInTime}
+
+Token Information:
+- Expires At: ${result.expiresAt}
+- Issuer: ${result.issuer}
+
+Backend Response:
+${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ Token Verification Failed: ${result.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                hideLoading('verifyBtn', 'verifyLoading');
+            }
+        });
+
+        // Auto-fill Firebase config info
+        showResult(`ℹ️  Firebase Configuration Required
+
+Please update the firebaseConfig object in this file with your Firebase project settings:
+
+1. Go to Firebase Console
+2. Select your project
+3. Go to Project Settings
+4. Copy the config object
+5. Replace the firebaseConfig in this file
+
+Current config is using placeholder values.`, 'info');
+    </script>
+</body>
+</html> 
