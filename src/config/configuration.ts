@@ -2,6 +2,7 @@ export interface FirebaseConfig {
   projectId: string;
   privateKey: string;
   clientEmail: string;
+  apiKey: string;
 }
 
 export interface AppConfig {
@@ -19,5 +20,6 @@ export default (): AppConfig => ({
     projectId: process.env.FIREBASE_PROJECT_ID || '',
     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n') || '',
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
+    apiKey: process.env.FIREBASE_API_KEY || '',
   },
 }); 

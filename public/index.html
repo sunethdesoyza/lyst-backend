@@ -173,65 +173,28 @@
             <p>Firebase Authentication Interface</p>
         </div>
 
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('login')">Login</div>
-            <div class="tab" onclick="switchTab('register')">Register</div>
-            <div class="tab" onclick="switchTab('verify')">Verify Token</div>
-        </div>
+                            <div class="tabs">
+                        <div class="tab active" onclick="switchTab('login')">Google Sign-In</div>
+                    </div>
 
-        <!-- Login Tab -->
+        <!-- Google Sign-In Tab -->
         <div id="login" class="tab-content active">
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" required placeholder="Enter your email">
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" required placeholder="Enter your password">
-                </div>
-                <button type="submit" class="btn" id="loginBtn">
-                    <span class="loading" id="loginLoading" style="display: none;"></span>
-                    Login with Firebase
+            <div class="form-group">
+                <p style="text-align: center; margin-bottom: 2rem; color: #666;">
+                    Sign in securely with your Google account
+                </p>
+            </div>
+            <div class="form-group" style="text-align: center;">
+                <div id="googleSignInButton"></div>
+            </div>
+            <div class="form-group" style="text-align: center; margin-top: 1rem;">
+                <button type="button" class="btn" id="signOutBtn" style="display: none;">
+                    Sign Out
                 </button>
-            </form>
+            </div>
         </div>
 
-        <!-- Register Tab -->
-        <div id="register" class="tab-content">
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="registerEmail">Email</label>
-                    <input type="email" id="registerEmail" required placeholder="Enter your email">
-                </div>
-                <div class="form-group">
-                    <label for="registerPassword">Password</label>
-                    <input type="password" id="registerPassword" required placeholder="Enter your password (min 6 chars)">
-                </div>
-                <div class="form-group">
-                    <label for="displayName">Display Name (Optional)</label>
-                    <input type="text" id="displayName" placeholder="Enter your display name">
-                </div>
-                <button type="submit" class="btn" id="registerBtn">
-                    <span class="loading" id="registerLoading" style="display: none;"></span>
-                    Register with Firebase
-                </button>
-            </form>
-        </div>
 
-        <!-- Verify Token Tab -->
-        <div id="verify" class="tab-content">
-            <form id="verifyForm">
-                <div class="form-group">
-                    <label for="tokenInput">Firebase ID Token</label>
-                    <input type="text" id="tokenInput" required placeholder="Paste your Firebase ID token here">
-                </div>
-                <button type="submit" class="btn" id="verifyBtn">
-                    <span class="loading" id="verifyLoading" style="display: none;"></span>
-                    Verify Token
-                </button>
-            </form>
-        </div>
 
         <div id="result" class="result" style="display: none;"></div>
     </div>
@@ -241,14 +204,22 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Firebase configuration - Replace with your Firebase config
+                // Firebase configuration - Replace with your Firebase config
+        // To get this config:
+        // 1. Go to https://console.firebase.google.com/
+        // 2. Select your project
+        // 3. Click the gear icon (⚙️) next to "Project Overview"
+        // 4. Select "Project settings"
+        // 5. Scroll to "Your apps" section
+        // 6. Copy the config object and replace this one
         const firebaseConfig = {
-            apiKey: "AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-            authDomain: "lyst-18d7e.firebaseapp.com",
-            projectId: "lyst-18d7e",
-            storageBucket: "lyst-18d7e.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef123456"
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
         };
 
         // Initialize Firebase
@@ -300,25 +271,53 @@
             document.getElementById(loadingId).style.display = 'none';
         }
 
-        // Login form handler
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+        // Google Sign-In setup
+        let currentUser = null;
 
-            showLoading('loginBtn', 'loginLoading');
+        // Initialize Google Sign-In
+        function initializeGoogleSignIn() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+
+            // Create Google Sign-In button
+            const googleSignInButton = document.getElementById('googleSignInButton');
+            googleSignInButton.innerHTML = `
+                <button onclick="signInWithGoogle()" class="btn" style="background: #4285f4; border: none; color: white; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Sign in with Google
+                </button>
+            `;
+        }
+
+        // Sign in with Google
+        async function signInWithGoogle() {
             hideResult();
+            
+            // Disable the button and show loading state
+            const button = document.querySelector('#googleSignInButton button');
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = `
+                    <span class="loading" style="display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #4285f4; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 0.5rem;"></span>
+                    Signing in...
+                `;
+            }
 
             try {
-                // Sign in with Firebase
-                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-                const user = userCredential.user;
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                currentUser = result.user;
                 
                 // Get ID token
-                const idToken = await user.getIdToken();
+                const idToken = await currentUser.getIdToken();
                 
-                // Send to backend
+                // Send to backend for verification
                 const response = await fetch(`${API_BASE_URL}/auth/login`, {
                     method: 'POST',
                     headers: {
@@ -327,142 +326,98 @@
                     body: JSON.stringify({ idToken })
                 });
 
-                const result = await response.json();
+                const backendResult = await response.json();
 
                 if (response.ok) {
-                    showResult(`✅ Login Successful!
+                    showResult(`✅ Google Sign-In Successful!
 
 User Information:
-- UID: ${result.user.uid}
-- Email: ${result.user.email}
-- Display Name: ${result.user.displayName || 'N/A'}
-- Email Verified: ${result.user.emailVerified}
-- Created: ${result.user.createdAt}
-- Last Sign In: ${result.user.lastSignInTime}
+- UID: ${currentUser.uid}
+- Email: ${currentUser.email}
+- Display Name: ${currentUser.displayName || 'N/A'}
+- Email Verified: ${currentUser.emailVerified}
+- Photo URL: ${currentUser.photoURL || 'N/A'}
+- Provider: ${currentUser.providerData[0]?.providerId || 'N/A'}
 
 Token Information:
 - ID Token: ${idToken.substring(0, 50)}...
-- Expires At: ${result.expiresAt}
+- Expires At: ${backendResult.expiresAt}
 
-Backend Response:
-${JSON.stringify(result, null, 2)}`, 'success');
+Backend Verification:
+${JSON.stringify(backendResult, null, 2)}`, 'success');
+
+                    // Show sign out button
+                    document.getElementById('signOutBtn').style.display = 'inline-block';
                 } else {
-                    showResult(`❌ Login Failed: ${result.message || 'Unknown error'}`, 'error');
+                    showResult(`❌ Backend Verification Failed: ${backendResult.message || 'Unknown error'}`, 'error');
                 }
             } catch (error) {
-                showResult(`❌ Error: ${error.message}`, 'error');
+                showResult(`❌ Google Sign-In Error: ${error.message}`, 'error');
             } finally {
-                hideLoading('loginBtn', 'loginLoading');
+                // Re-enable the button and restore original content
+                const button = document.querySelector('#googleSignInButton button');
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = `
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Sign in with Google
+                    `;
+                }
             }
-        });
+        }
 
-        // Register form handler
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const displayName = document.getElementById('displayName').value;
-
-            showLoading('registerBtn', 'registerLoading');
-            hideResult();
-
+        // Sign out
+        document.getElementById('signOutBtn').addEventListener('click', async () => {
             try {
-                // Send registration to backend
-                const response = await fetch(`${API_BASE_URL}/auth/register`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        email, 
-                        password, 
-                        displayName: displayName || undefined 
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showResult(`✅ Registration Successful!
-
-User Information:
-- UID: ${result.uid}
-- Email: ${result.email}
-- Display Name: ${result.displayName || 'N/A'}
-- Email Verified: ${result.emailVerified}
-- Created: ${result.createdAt}
-
-Backend Response:
-${JSON.stringify(result, null, 2)}`, 'success');
-                } else {
-                    showResult(`❌ Registration Failed: ${result.message || 'Unknown error'}`, 'error');
-                }
+                await firebase.auth().signOut();
+                currentUser = null;
+                document.getElementById('signOutBtn').style.display = 'none';
+                showResult('✅ Signed out successfully', 'success');
             } catch (error) {
-                showResult(`❌ Error: ${error.message}`, 'error');
-            } finally {
-                hideLoading('registerBtn', 'registerLoading');
+                showResult(`❌ Sign out error: ${error.message}`, 'error');
             }
         });
 
-        // Verify token form handler
-        document.getElementById('verifyForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const idToken = document.getElementById('tokenInput').value;
-
-            showLoading('verifyBtn', 'verifyLoading');
-            hideResult();
-
-            try {
-                // Send token to backend for verification
-                const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ idToken })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showResult(`✅ Token Verification Successful!
-
-User Information:
-- UID: ${result.user.uid}
-- Email: ${result.user.email}
-- Display Name: ${result.user.displayName || 'N/A'}
-- Email Verified: ${result.user.emailVerified}
-- Created: ${result.user.createdAt}
-- Last Sign In: ${result.user.lastSignInTime}
-
-Token Information:
-- Expires At: ${result.expiresAt}
-- Issuer: ${result.issuer}
-
-Backend Response:
-${JSON.stringify(result, null, 2)}`, 'success');
-                } else {
-                    showResult(`❌ Token Verification Failed: ${result.message || 'Unknown error'}`, 'error');
-                }
-            } catch (error) {
-                showResult(`❌ Error: ${error.message}`, 'error');
-            } finally {
-                hideLoading('verifyBtn', 'verifyLoading');
+        // Listen for auth state changes
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('signOutBtn').style.display = 'inline-block';
+            } else {
+                currentUser = null;
+                document.getElementById('signOutBtn').style.display = 'none';
             }
         });
+
+
+
+
+
+
+
+        // Initialize Google Sign-In
+        initializeGoogleSignIn();
 
         // Auto-fill Firebase config info
         showResult(`ℹ️  Firebase Configuration Required
 
-Please update the firebaseConfig object in this file with your Firebase project settings:
+To use Google Sign-In, you need to update the firebaseConfig object above with your real Firebase settings:
 
-1. Go to Firebase Console
+1. Go to https://console.firebase.google.com/
 2. Select your project
-3. Go to Project Settings
-4. Copy the config object
-5. Replace the firebaseConfig in this file
+3. Click the gear icon (⚙️) next to "Project Overview"
+4. Select "Project settings"
+5. Scroll to "Your apps" section
+6. Copy the config object and replace the firebaseConfig above
+
+Also make sure to:
+- Enable Google Sign-In in Firebase Console > Authentication > Sign-in method
+- Add your domain to authorized domains if needed
 
 Current config is using placeholder values.`, 'info');
     </script>

@@ -8,7 +8,9 @@ import {
   VerifyTokenDto, 
   RefreshTokenDto,
   AuthResponseDto,
-  TokenVerificationResponseDto 
+  TokenVerificationResponseDto,
+  LoginWithCredentialsDto,
+  CredentialsLoginResponseDto
 } from './dto/auth.dto';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -49,17 +51,16 @@ export class AuthController {
       console.log('Token from request:', loginDto.idToken);
       
       const decodedToken = await this.authService.verifyToken(loginDto.idToken);
-      const userData = await this.authService.getUserData(decodedToken.uid);
       
       return {
         success: true,
         user: {
-          uid: userData.uid,
-          email: userData.email,
-          displayName: userData.displayName,
-          emailVerified: userData.emailVerified,
-          createdAt: userData.metadata.creationTime,
-          lastSignInTime: userData.metadata.lastSignInTime,
+          uid: decodedToken.uid,
+          email: decodedToken.email,
+          displayName: decodedToken.name,
+          emailVerified: decodedToken.email_verified,
+          createdAt: new Date(decodedToken.auth_time * 1000).toISOString(),
+          lastSignInTime: new Date(decodedToken.auth_time * 1000).toISOString(),
         },
         idToken: loginDto.idToken,
         expiresAt: new Date(decodedToken.exp * 1000).toISOString(),
@@ -67,6 +68,66 @@ export class AuthController {
     } catch (error) {
       console.error('Login error:', error);
       throw new UnauthorizedException('Invalid credentials');
+    }
+  }
+
+  @Post('login/credentials')
+  @ApiOperation({ 
+    summary: 'Login with email and password',
+    description: 'Authenticate user with email and password, return Firebase ID token and refresh token'
+  })
+  @ApiBody({
+    description: 'User credentials for authentication',
+    type: LoginWithCredentialsDto,
+    examples: {
+      example1: {
+        summary: 'Login with credentials',
+        value: {
+          email: 'user@example.com',
+          password: 'password123'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Login successful',
+    type: CredentialsLoginResponseDto 
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Unauthorized - Invalid credentials' 
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'Bad request - Missing email or password' 
+  })
+  async loginWithCredentials(@Body() credentialsDto: LoginWithCredentialsDto): Promise<CredentialsLoginResponseDto> {
+    try {
+      console.log('Received credentials login request for:', credentialsDto.email);
+      
+      const result = await this.authService.loginWithCredentials(
+        credentialsDto.email, 
+        credentialsDto.password
+      );
+      
+      return {
+        success: true,
+        user: {
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName,
+          emailVerified: result.user.emailVerified,
+          createdAt: result.user.metadata.creationTime,
+          lastSignInTime: result.user.metadata.lastSignInTime,
+        },
+        idToken: result.idToken,
+        refreshToken: result.refreshToken,
+        expiresAt: result.expiresAt,
+      };
+    } catch (error) {
+      console.error('Credentials login error:', error);
+      throw error; // Re-throw the error as it's already properly formatted
     }
   }
 

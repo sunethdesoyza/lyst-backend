@@ -11,6 +11,24 @@ export class LoginDto {
   idToken: string;
 }
 
+export class LoginWithCredentialsDto {
+  @ApiProperty({
+    description: 'User email address',
+    example: 'user@example.com',
+  })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({
+    description: 'User password',
+    example: 'password123',
+  })
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+}
+
 export class RefreshTokenDto {
   @ApiProperty({
     description: 'Firebase refresh token',
@@ -155,4 +173,36 @@ export class TokenVerificationResponseDto {
     example: 'https://securetoken.google.com/your-project-id',
   })
   issuer: string;
+}
+
+export class CredentialsLoginResponseDto {
+  @ApiProperty({
+    description: 'Authentication success status',
+    example: true,
+  })
+  success: boolean;
+
+  @ApiProperty({
+    description: 'User information',
+    type: UserResponseDto,
+  })
+  user: UserResponseDto;
+
+  @ApiProperty({
+    description: 'Firebase ID token',
+    example: 'eyJhbGciOiJSUzI1NiIsImtpZCI6...',
+  })
+  idToken: string;
+
+  @ApiProperty({
+    description: 'Firebase refresh token',
+    example: 'AMf-vBz...',
+  })
+  refreshToken: string;
+
+  @ApiProperty({
+    description: 'Token expiration time',
+    example: '2024-01-01T01:00:00.000Z',
+  })
+  expiresAt: string;
 } 

@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: lyst-backend
     ports:
-      - "3000:3000"
+      - "${PORT:-3080}:3000"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=3000
@@ -13,9 +13,12 @@ services:
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
       - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+      - FIREBASE_API_KEY=${FIREBASE_API_KEY}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
     env_file:
       - .env
+      # - .env.local          # Uncomment for local overrides
+      # - .env.production     # Uncomment for production settings
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]

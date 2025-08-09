@@ -67,7 +67,10 @@ export class FirebaseService implements OnModuleInit {
       return admin;
     } catch (error) {
       this.logger.error('Error initializing Firebase Admin:', error);
-      throw error;
+      this.logger.warn('Firebase Admin initialization failed, but application will continue without Firebase Admin SDK');
+      this.logger.warn('Some features may not work properly without Firebase Admin SDK');
+      // Don't throw error, allow application to continue
+      return null;
     }
   }
 

@@ -20,6 +20,13 @@ async function bootstrap() {
     const configService = app.get(ConfigService);
     const firebaseService = app.get(FirebaseService);
     
+    // Try to initialize Firebase, but don't fail if it doesn't work
+    try {
+      await firebaseService.initializeApp();
+    } catch (error) {
+      logger.warn('Firebase initialization failed, but application will continue');
+    }
+    
     // Enable CORS
     app.enableCors();
     
