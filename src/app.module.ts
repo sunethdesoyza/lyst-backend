@@ -7,6 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import { ListModule } from './list/list.module';
 import { FirebaseService } from './config/firebase.config';
 import { HealthController } from './health/health.controller';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -25,7 +27,7 @@ import { HealthController } from './health/health.controller';
     AuthModule,
     ListModule,
   ],
-  controllers: [HealthController],
-  providers: [FirebaseService],
+  controllers: [AppController, HealthController],
+  providers: [AppService, FirebaseService],
 })
 export class AppModule {} 
