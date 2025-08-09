@@ -251,16 +251,53 @@
                             
                             initializeGoogleSignIn();
                             
-                            // Listen for auth state changes (moved here to ensure Firebase is initialized)
-                            firebase.auth().onAuthStateChanged((user) => {
-                                if (user) {
-                                    currentUser = user;
-                                    document.getElementById('signOutBtn').style.display = 'inline-block';
-                                } else {
-                                    currentUser = null;
-                                    document.getElementById('signOutBtn').style.display = 'none';
-                                }
+                                        // Listen for auth state changes (moved here to ensure Firebase is initialized)
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user) {
+                    currentUser = user;
+                    document.getElementById('signOutBtn').style.display = 'inline-block';
+                    
+                    // Handle redirect result if this is a redirect flow
+                    try {
+                        const result = await firebase.auth().getRedirectResult();
+                        if (result.user) {
+                            // User signed in via redirect, send token to backend
+                            const idToken = await result.user.getIdToken();
+                            const loginUrl = `${API_BASE_URL}/auth/login`;
+                            console.log('🔐 Sending redirect login request to:', loginUrl);
+                            
+                            const response = await fetch(loginUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ idToken })
                             });
+
+                            const backendResult = await response.json();
+                            if (response.ok) {
+                                showResult(`✅ Google Sign-In Successful (Redirect)!
+
+User Information:
+- UID: ${result.user.uid}
+- Email: ${result.user.email}
+- Display Name: ${result.user.displayName || 'N/A'}
+- Email Verified: ${result.user.emailVerified}
+
+Backend Verification: ✅ Success`, 'success');
+                            } else {
+                                showResult(`❌ Backend Verification Failed: ${backendResult.message || 'Unknown error'}`, 'error');
+                            }
+                        }
+                    } catch (error) {
+                        // Ignore redirect result errors (normal when not using redirect)
+                        console.log('No redirect result or error:', error.message);
+                    }
+                } else {
+                    currentUser = null;
+                    document.getElementById('signOutBtn').style.display = 'none';
+                }
+            });
                         } catch (error) {
                             console.error('❌ Error initializing Firebase:', error);
                             showResult(`❌ Error initializing Firebase: ${error.message}`, 'error');
@@ -352,6 +389,8 @@
                     }
 
         // Sign in with Google
+        // Note: Cross-Origin-Opener-Policy (COOP) warnings are normal browser security behavior
+        // and don't affect the authentication functionality
         async function signInWithGoogle() {
             hideResult();
             
