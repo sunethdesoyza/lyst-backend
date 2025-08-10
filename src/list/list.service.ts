@@ -7,12 +7,14 @@ import { CreateListDto } from './dto/create-list.dto';
 import { CreateItemDto, UpdateItemDto } from './dto/item.dto';
 import { ListResponseDto } from './dto/list-response.dto';
 import { ForgottenItemResponseDto, DismissForgottenItemsDto, ReactivateListDto, MoveToNewListDto } from './dto/forgotten-item.dto';
+import { CategoryService } from './category.service';
 
 @Injectable()
 export class ListService {
   constructor(
     @InjectModel(List.name) private listModel: Model<ListDocument>,
     @InjectModel(ForgottenItem.name) private forgottenItemModel: Model<ForgottenItemDocument>,
+    private categoryService: CategoryService,
   ) {}
 
   private async handleExpiredList(list: ListDocument): Promise<void> {
@@ -49,6 +51,10 @@ export class ListService {
         ...createListDto,
         userId,
       });
+      
+      // Update category list count
+      await this.categoryService.updateListCounts(userId);
+      
       return this.mapToResponseDto(createdList);
     } catch (error) {
       throw new Error(`Failed to create list: ${error.message}`);

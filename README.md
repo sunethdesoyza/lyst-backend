@@ -1,397 +1,293 @@
-# Lyst Backend API
+# Lyst Backend
 
-A robust NestJS-based backend API for managing lists and items with Firebase authentication and MongoDB persistence.
+A robust, scalable backend API built with NestJS for managing lists, items, and user authentication. This project provides a comprehensive solution for list management applications with Firebase authentication and MongoDB storage.
 
-## 🚀 Overview
+## 🚀 Features
 
-Lyst Backend is a modern, scalable API built with NestJS that provides comprehensive list management functionality. The application features Firebase authentication, MongoDB data persistence, and a sophisticated "forgotten items" system that automatically handles expired lists.
+- **Authentication & Authorization**
+  - Firebase JWT-based authentication
+  - User registration and login
+  - Token verification and refresh
+  - Role-based access control
 
-## 🏗️ Architecture
+- **List Management**
+  - Create, read, update, and delete lists
+  - Categorize lists with priority levels
+  - Set expiry dates and color coding
+  - Archive and restore lists
 
-### Technology Stack
+- **Item Management**
+  - Add, update, and remove items from lists
+  - Mark items as completed
+  - Track item status and progress
 
-- **Framework**: NestJS (Node.js)
+- **Smart Features**
+  - Forgotten items tracking
+  - List reactivation capabilities
+  - Category-based organization
+  - Priority management
+
+- **Developer Experience**
+  - Comprehensive Swagger API documentation
+  - Health check endpoints
+  - Structured logging
+  - Input validation and error handling
+
+## 🛠️ Tech Stack
+
+- **Framework**: NestJS 10.x
+- **Language**: TypeScript 5.x
 - **Database**: MongoDB with Mongoose ODM
 - **Authentication**: Firebase Admin SDK
-- **Documentation**: Swagger/OpenAPI
-- **Health Checks**: @nestjs/terminus
-- **Validation**: class-validator & class-transformer
+- **Documentation**: Swagger/OpenAPI 3.0
+- **Validation**: Class-validator & Class-transformer
+- **Testing**: Jest
+- **Containerization**: Docker & Docker Compose
 
-### Project Structure
+## 📋 Prerequisites
 
-```
-src/
-├── auth/                    # Authentication module
-│   ├── auth.controller.ts   # Auth endpoints
-│   ├── auth.service.ts      # Firebase token verification
-│   ├── auth.module.ts       # Auth module configuration
-│   ├── strategies/          # Passport strategies
-│   │   └── firebase.strategy.ts
-│   ├── filters/            # Exception filters
-│   │   └── auth-exception.filter.ts
-│   └── dto/               # Data transfer objects
-│       └── auth.dto.ts
-├── config/                 # Configuration management
-│   ├── configuration.ts    # App configuration interface
-│   └── firebase.config.ts # Firebase service setup
-├── list/                   # List management module
-│   ├── list.controller.ts  # List CRUD endpoints
-│   ├── list.service.ts     # Business logic
-│   ├── list.module.ts      # List module configuration
-│   ├── schemas/           # MongoDB schemas
-│   │   ├── list.schema.ts
-│   │   ├── item.schema.ts
-│   │   └── forgotten-item.schema.ts
-│   └── dto/              # Data transfer objects
-│       ├── create-list.dto.ts
-│       ├── list-response.dto.ts
-│       ├── item.dto.ts
-│       ├── forgotten-item.dto.ts
-│       └── forgotten-item-response.dto.ts
-├── health/                # Health check endpoints
-│   └── health.controller.ts
-├── app.module.ts          # Root module
-├── app.controller.ts      # Root controller
-├── app.service.ts         # Root service
-└── main.ts               # Application bootstrap
-```
-
-## 🔧 Core Functionalities
-
-### 1. Authentication & Authorization
-
-- **Firebase Integration**: Secure authentication using Firebase Admin SDK
-- **JWT Token Validation**: Custom Passport strategy for Firebase JWT tokens
-- **User Management**: Automatic user verification and data retrieval
-- **Protected Routes**: All list operations require valid authentication
-- **Comprehensive Auth Interface**: Complete Firebase authentication endpoints
-
-#### 🔐 Firebase Authentication Endpoints
-
-The application provides a complete Firebase authentication interface with the following endpoints:
-
-**Authentication:**
-- `POST /auth/login` - Login with Firebase ID token
-- `POST /auth/register` - Create new user account
-- `POST /auth/verify` - Verify Firebase token
-- `POST /auth/refresh` - Token refresh (client-side guidance)
-
-**User Management (Requires Authentication):**
-- `GET /auth/user/:uid` - Get user information
-- `GET /auth/users` - List all users (with pagination)
-- `DELETE /auth/user/:uid` - Delete user account
-- `POST /auth/user/:uid/revoke-tokens` - Revoke user tokens
-
-**Quick Authentication Example:**
-```bash
-# Login with Firebase token
-curl -X POST http://localhost:3080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"idToken": "your-firebase-id-token"}'
-
-# Register new user
-curl -X POST http://localhost:3080/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "password123",
-    "displayName": "John Doe"
-  }'
-
-# Verify token
-curl -X POST http://localhost:3080/auth/verify \
-  -H "Content-Type: application/json" \
-  -d '{"idToken": "your-firebase-id-token"}'
-```
-
-**Client-Side Integration:**
-```typescript
-// Get Firebase ID token from client-side Firebase Auth
-const idToken = await firebase.auth().currentUser?.getIdToken();
-
-// Login with backend
-const response = await fetch('http://localhost:3080/auth/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ idToken })
-});
-
-const result = await response.json();
-console.log('Login successful:', result.user);
-```
-
-**Features:**
-- ✅ **Secure Token Validation** - All tokens verified with Firebase Admin SDK
-- ✅ **User Registration** - Server-side user creation with validation
-- ✅ **Token Verification** - Decode and verify Firebase ID tokens
-- ✅ **User Management** - Full CRUD operations for user accounts
-- ✅ **Error Handling** - Comprehensive error responses with proper HTTP status codes
-- ✅ **Swagger Documentation** - Interactive API documentation at `/api`
-- ✅ **TypeScript Support** - Strongly typed DTOs and responses
-
-### 2. List Management
-
-#### List Operations
-- **Create Lists**: Create new lists with categories, priorities, and expiry dates
-- **Read Lists**: Retrieve all active lists for authenticated users
-- **Update Lists**: Modify list properties (name, category, priority, etc.)
-- **Archive Lists**: Soft delete lists with reason tracking (DELETED/EXPIRED)
-
-#### List Properties
-- **Name**: Required list identifier
-- **Category**: List classification (e.g., GROCERIES, TASKS)
-- **Priority**: Priority levels (LOW, MEDIUM, HIGH)
-- **Expiry Date**: Optional expiration timestamp
-- **Color**: Custom color coding
-- **User Association**: Lists are tied to Firebase user IDs
-
-### 3. Item Management
-
-#### Item Operations
-- **Add Items**: Add items to existing lists
-- **Update Items**: Modify item properties (name, quantity, notes, completion status)
-- **Delete Items**: Remove items from lists
-- **Complete Items**: Mark items as completed
-
-#### Item Properties
-- **Name**: Required item identifier
-- **Quantity**: Optional quantity specification
-- **Notes**: Additional item details
-- **Completion Status**: Track item completion
-- **Timestamps**: Creation and update tracking
-
-### 4. Forgotten Items System
-
-The application features an intelligent "forgotten items" system that automatically handles expired lists:
-
-#### Automatic Processing
-- **Expiry Detection**: Automatically detects when lists expire
-- **Item Preservation**: Incomplete items from expired lists are preserved as "forgotten items"
-- **List Archiving**: Expired lists are automatically archived with "EXPIRED" reason
-
-#### Forgotten Items Management
-- **View Forgotten Items**: Retrieve all forgotten items for a user
-- **Dismiss Items**: Remove forgotten items (by list or specific items)
-- **Reactivate Lists**: Restore archived lists with forgotten items
-- **Move to New List**: Create new lists from forgotten items
-
-#### Forgotten Item Properties
-- **Original Context**: Tracks original list ID and name
-- **User Association**: Tied to specific users
-- **Expiry Information**: Preserves original expiry date
-- **Item Details**: Maintains all original item information
-
-### 5. Health Monitoring
-
-- **Health Checks**: Built-in health monitoring endpoints
-- **Service Status**: Monitor application and database connectivity
-- **API Documentation**: Comprehensive Swagger documentation
-
-## 🔌 API Endpoints
-
-### Authentication
-- All endpoints require Firebase JWT token in Authorization header
-- Format: `Bearer <firebase-jwt-token>`
-
-#### Firebase Authentication Endpoints
-```
-POST   /auth/login                    # Login with Firebase ID token
-POST   /auth/register                 # Create new user account
-POST   /auth/verify                   # Verify Firebase token
-POST   /auth/refresh                  # Token refresh (client-side guidance)
-GET    /auth/user/:uid                # Get user information (authenticated)
-GET    /auth/users                    # List all users (authenticated)
-DELETE /auth/user/:uid                # Delete user account (authenticated)
-POST   /auth/user/:uid/revoke-tokens  # Revoke user tokens (authenticated)
-```
-
-### Lists
-```
-POST   /lists                    # Create new list
-GET    /lists                    # Get all active lists
-GET    /lists/:id               # Get specific list
-PUT    /lists/:id               # Update list
-DELETE /lists/:id               # Archive list
-```
-
-### Items
-```
-POST   /lists/:id/items         # Add item to list
-PUT    /lists/:id/items/:itemId # Update item
-DELETE /lists/:id/items/:itemId # Delete item
-```
-
-### Forgotten Items
-```
-GET    /lists/forgotten-items                    # Get all forgotten items
-POST   /lists/forgotten-items/dismiss           # Dismiss forgotten items
-POST   /lists/forgotten-items/reactivate        # Reactivate list with items
-POST   /lists/forgotten-items/move-to-new       # Move items to new list
-```
-
-### Health
-```
-GET    /health                   # Application health check
-```
-
-## 🛠️ Setup & Installation
-
-### Prerequisites
-
-- Node.js (v16 or higher)
-- MongoDB instance
+- Node.js 18+ 
+- MongoDB (local or Atlas)
 - Firebase project with service account
+- Docker & Docker Compose (optional)
 
-### Environment Variables
+## 🚀 Quick Start
 
-Create a `.env` file in the root directory:
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd lyst-backend
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Environment Configuration
+
+Copy the example environment file and configure your settings:
+
+```bash
+cp env.example .env
+```
+
+Update the `.env` file with your configuration:
 
 ```env
-# Application
+# Application Configuration
 PORT=3000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 
-# MongoDB
+# MongoDB Configuration
 MONGODB_URI=mongodb://localhost:27017/lyst
 
-# Firebase
+# Firebase Configuration
 FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_CLIENT_EMAIL=your-service-account@project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour Private Key\n-----END PRIVATE KEY-----"
+FIREBASE_API_KEY=your-api-key
 ```
 
-### Installation
+### 4. Run the Application
 
+#### Development Mode
 ```bash
-# Install dependencies
-npm install
-
-# Development
 npm run start:dev
+```
 
-# Production build
+#### Production Mode
+```bash
 npm run build
 npm run start:prod
+```
 
-# Testing
-npm run test
-npm run test:e2e
+### 5. Access the Application
+
+- **API**: http://localhost:3000
+- **Swagger Documentation**: http://localhost:3000/api
+- **Health Check**: http://localhost:3000/health
+
+## 🐳 Docker Deployment
+
+### Using Docker Compose
+
+```bash
+# Build and start the application
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the application
+docker-compose down
+```
+
+### Manual Docker Build
+
+```bash
+# Build the image
+docker build -t lyst-backend .
+
+# Run the container
+docker run -p 3000:3000 --env-file .env lyst-backend
 ```
 
 ## 📚 API Documentation
 
-Once the application is running, access the interactive API documentation at:
+The API is fully documented using Swagger/OpenAPI 3.0. Once the application is running, visit `/api` to explore the interactive API documentation.
 
-```
-http://localhost:3000/api
-```
+### Key Endpoints
 
-The Swagger UI provides:
-- Complete endpoint documentation
-- Request/response examples
-- Interactive testing interface
-- Authentication token management
+#### Authentication
+- `POST /auth/login` - Login with Firebase token
+- `POST /auth/login/credentials` - Login with email/password
+- `POST /auth/register` - Register new user
+- `POST /auth/verify` - Verify authentication token
 
-### 📖 Additional Documentation
+#### Lists
+- `GET /lists` - Get all user lists
+- `POST /lists` - Create new list
+- `GET /lists/:id` - Get specific list
+- `PUT /lists/:id` - Update list
+- `DELETE /lists/:id` - Archive list
 
-- **Firebase Authentication Guide**: `docs/firebase-auth-interface.md` - Comprehensive guide for Firebase authentication integration
-- **Private Registry Setup**: `docs/private-registry-setup.md` - Complete Docker registry setup guide
-- **Environment Examples**: `env.example` - Environment variable templates
+#### Items
+- `POST /lists/:id/items` - Add item to list
+- `PUT /lists/:id/items/:itemId` - Update item
+- `DELETE /lists/:id/items/:itemId` - Remove item
 
-## 🔒 Security Features
+#### Categories
+- `GET /lists/categories` - Get available categories
 
-- **Firebase Authentication**: Secure user authentication
-- **JWT Token Validation**: Automatic token verification
-- **User Isolation**: Data isolation per authenticated user
-- **Input Validation**: Comprehensive request validation
-- **Error Handling**: Secure error responses
+## 🧪 Testing
 
-## 🗄️ Database Schema
+```bash
+# Unit tests
+npm run test
 
-### List Schema
-```typescript
-{
-  name: string,           // Required
-  userId: string,         // Firebase user ID
-  category: string,       // List category
-  priority: string,       // LOW, MEDIUM, HIGH
-  expiryDate: Date,      // Optional expiration
-  color: string,         // Custom color
-  isArchived: boolean,   // Archive status
-  archivedReason: string, // DELETED or EXPIRED
-  items: Item[],         // Embedded items
-  timestamps: true       // Created/updated timestamps
-}
+# Test coverage
+npm run test:cov
+
+# E2E tests
+npm run test:e2e
+
+# Test in watch mode
+npm run test:watch
 ```
 
-### Item Schema
-```typescript
-{
-  name: string,          // Required
-  quantity: string,      // Optional
-  notes: string,         // Optional
-  isCompleted: boolean,  // Completion status
-  timestamps: true       // Created/updated timestamps
-}
+## 🔧 Development
+
+### Code Quality
+
+```bash
+# Lint code
+npm run lint
+
+# Format code
+npm run format
 ```
 
-### Forgotten Item Schema
-```typescript
-{
-  name: string,              // Item name
-  quantity: string,          // Original quantity
-  notes: string,             // Original notes
-  userId: string,            // User ID
-  originalListId: string,    // Source list ID
-  originalListName: string,  // Source list name
-  expiryDate: Date,         // Original expiry date
-  timestamps: true          // Created/updated timestamps
-}
+### Available Scripts
+
+- `npm run build` - Build the application
+- `npm run start:dev` - Start in development mode with hot reload
+- `npm run start:debug` - Start in debug mode
+- `npm run start:prod` - Start in production mode
+
+## 📁 Project Structure
+
 ```
+src/
+├── auth/                 # Authentication module
+│   ├── dto/             # Data transfer objects
+│   ├── filters/         # Exception filters
+│   └── strategies/      # Passport strategies
+├── config/              # Configuration files
+├── health/              # Health check endpoints
+├── list/                # List management module
+│   ├── dto/             # Data transfer objects
+│   └── schemas/         # MongoDB schemas
+└── main.ts              # Application entry point
+```
+
+## 🔐 Firebase Setup
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Authentication and Firestore (if needed)
+3. Go to Project Settings > Service Accounts
+4. Generate a new private key
+5. Download the JSON file and extract the required values
+6. Update your `.env` file with the Firebase configuration
+
+## 🗄️ MongoDB Setup
+
+### Local MongoDB
+```bash
+# Install MongoDB (macOS)
+brew install mongodb-community
+
+# Start MongoDB service
+brew services start mongodb-community
+```
+
+### MongoDB Atlas
+1. Create a cluster at [MongoDB Atlas](https://www.mongodb.com/atlas)
+2. Get your connection string
+3. Update `MONGODB_URI` in your `.env` file
 
 ## 🚀 Deployment
 
-### Docker (Recommended)
+### Production Considerations
 
-```dockerfile
-FROM node:18-alpine
+- Set `NODE_ENV=production`
+- Use environment-specific configuration files
+- Configure proper CORS settings
+- Set up monitoring and logging
+- Use HTTPS in production
+- Configure proper firewall rules
 
-WORKDIR /app
+### Environment Variables
 
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY dist ./dist
-
-EXPOSE 3000
-
-CMD ["npm", "run", "start:prod"]
-```
-
-### Environment Setup
-
-1. **MongoDB**: Set up MongoDB instance (local or cloud)
-2. **Firebase**: Configure Firebase project and service account
-3. **Environment Variables**: Configure all required environment variables
-4. **SSL/TLS**: Configure HTTPS for production
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `PORT` | Application port | No | 3000 |
+| `NODE_ENV` | Environment mode | No | development |
+| `MONGODB_URI` | MongoDB connection string | Yes | - |
+| `FIREBASE_PROJECT_ID` | Firebase project ID | Yes | - |
+| `FIREBASE_CLIENT_EMAIL` | Firebase service account email | Yes | - |
+| `FIREBASE_PRIVATE_KEY` | Firebase private key | Yes | - |
+| `FIREBASE_API_KEY` | Firebase API key | Yes | - |
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 License
+## 📝 License
 
-This project is licensed under the UNLICENSED license.
+This project is licensed under the UNLICENSED license - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
 For support and questions:
-- Check the API documentation at `/api`
-- Review the health endpoint at `/health`
-- Check application logs for detailed error information 
+- Check the [API documentation](http://localhost:3000/api) when running locally
+- Review the Firebase and MongoDB setup guides
+- Check the troubleshooting documentation in the `docs/` folder
+
+## 🔄 Changelog
+
+### v0.0.1
+- Initial release
+- Basic CRUD operations for lists and items
+- Firebase authentication integration
+- MongoDB integration with Mongoose
+- Swagger API documentation
+- Docker support
+- Health check endpoints 

@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Req, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiUnauthorizedResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { ListService } from './list.service';
+import { CategoryService } from './category.service';
 import { CreateListDto } from './dto/create-list.dto';
 import { ListResponseDto } from './dto/list-response.dto';
 import { CreateItemDto, UpdateItemDto } from './dto/item.dto';
@@ -16,7 +17,10 @@ import { ForgottenItemResponseDto } from './dto/forgotten-item-response.dto';
 export class ListController {
   private readonly logger = new Logger(ListController.name);
 
-  constructor(private readonly listService: ListService) {}
+  constructor(
+    private readonly listService: ListService,
+    private readonly categoryService: CategoryService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new list' })
@@ -54,6 +58,17 @@ export class ListController {
   async findAll(@Req() req: any) {
     this.logger.debug(`Fetching all lists for user ${req.user?.uid}`);
     return this.listService.findAll(req.user.uid);
+  }
+
+  @Get('categories')
+  @ApiOperation({ summary: 'Get available categories for creating lists' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns all categories available to the user for creating lists'
+  })
+  async getAvailableCategories(@Req() req: any) {
+    this.logger.debug(`Fetching available categories for user ${req.user?.uid}`);
+    return this.categoryService.getUserCategories(req.user.uid);
   }
 
   @Get('forgotten-items')
