@@ -42,6 +42,12 @@ export class List {
   @Prop({ type: [ItemSchema], default: [] })
   items: Item[];
 
+  @Prop({ default: false })
+  isShared: boolean;
+
+  @Prop({ type: [String], default: [] })
+  sharedWith: string[]; // Array of user IDs this list is shared with
+
   @Prop()
   createdAt: Date;
 

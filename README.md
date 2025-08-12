@@ -26,6 +26,12 @@ A robust, scalable backend API built with NestJS for managing lists, items, and 
   - List reactivation capabilities
   - Category-based organization
   - Priority management
+  - **List Sharing System**
+    - Generate public sharing links for lists
+    - Share links via any channel (WhatsApp, SMS, email, etc.)
+    - Automatic user invitation for unregistered recipients
+    - Share management and revocation
+    - Real-time sharing status tracking
 
 - **Developer Experience**
   - Comprehensive Swagger API documentation
@@ -109,6 +115,7 @@ npm run start:prod
 
 - **API**: http://localhost:3000
 - **Swagger Documentation**: http://localhost:3000/api
+- **OpenAPI JSON**: http://localhost:3000/api-json
 - **Health Check**: http://localhost:3000/health
 
 ## 🐳 Docker Deployment
@@ -140,6 +147,17 @@ docker run -p 3000:3000 --env-file .env lyst-backend
 
 The API is fully documented using Swagger/OpenAPI 3.0. Once the application is running, visit `/api` to explore the interactive API documentation.
 
+### OpenAPI Specification
+
+You can download the complete OpenAPI specification in JSON format:
+- **Download OpenAPI JSON**: http://localhost:3000/api-json
+
+This specification can be imported into:
+- API design tools (Postman, Insomnia)
+- Code generation tools (OpenAPI Generator, Swagger Codegen)
+- API testing frameworks
+- Documentation generators
+
 ### Key Endpoints
 
 #### Authentication
@@ -162,6 +180,14 @@ The API is fully documented using Swagger/OpenAPI 3.0. Once the application is r
 
 #### Categories
 - `GET /lists/categories` - Get available categories
+
+#### List Sharing
+- `POST /sharing/share` - Create a sharing link for a list
+- `POST /sharing/accept` - Accept a list share invitation
+- `GET /sharing/received` - Get lists shared with the current user
+- `GET /sharing/sent` - Get lists shared by the current user
+- `DELETE /sharing/:shareId` - Revoke a list share
+- `GET /sharing/invitation/:token` - Get invitation details (public)
 
 ## 🧪 Testing
 

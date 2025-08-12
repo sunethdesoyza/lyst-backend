@@ -79,6 +79,13 @@ async function bootstrap() {
       }
     });
     
+    // Add route to download OpenAPI JSON specification
+    app.use('/api-json', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="openapi.json"');
+      res.send(document);
+    });
+    
     app.useGlobalFilters(new AuthExceptionFilter());
     
     const port = configService.get<number>('PORT', 3000);
@@ -88,6 +95,7 @@ async function bootstrap() {
     logger.log(`🚀 Application is running in ${nodeEnv} mode on: http://localhost:${port}`);
     logger.log(`🔐 Login Interface available at: http://localhost:${port}`);
     logger.log(`📚 Swagger documentation is available at: http://localhost:${port}/api`);
+    logger.log(`📥 OpenAPI JSON specification available at: http://localhost:${port}/api-json`);
   } catch (error) {
     logger.error('Failed to start application:', error);
     process.exit(1);
