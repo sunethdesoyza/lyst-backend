@@ -6,7 +6,6 @@ import { List, ListDocument } from './schemas/list.schema';
 import { SharedList, SharedListDocument, ShareStatus } from './schemas/shared-list.schema';
 import { UserInvitation, UserInvitationDocument, InvitationStatus } from './schemas/user-invitation.schema';
 import { ShareListDto, ShareListResponseDto, AcceptShareDto, AcceptShareResponseDto } from './dto/share-list.dto';
-import { AuthService } from '../auth/auth.service';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -17,7 +16,6 @@ export class SharingService {
     @InjectModel(List.name) private listModel: Model<ListDocument>,
     @InjectModel(SharedList.name) private sharedListModel: Model<SharedListDocument>,
     @InjectModel(UserInvitation.name) private userInvitationModel: Model<UserInvitationDocument>,
-    private authService: AuthService,
     private configService: ConfigService,
   ) {}
 

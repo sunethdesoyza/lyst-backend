@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule } from '@nestjs/config';
 import { ListController } from './list.controller';
 import { ListService } from './list.service';
 import { CategoryController } from './category.controller';
@@ -14,6 +15,7 @@ import { UserInvitation, UserInvitationSchema } from './schemas/user-invitation.
 
 @Module({
   imports: [
+    ConfigModule,
     MongooseModule.forFeature([
       { name: List.name, schema: ListSchema },
       { name: ForgottenItem.name, schema: ForgottenItemSchema },
